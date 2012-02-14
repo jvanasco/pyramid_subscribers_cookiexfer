@@ -34,5 +34,6 @@ setup(name="pyramid_subscribers_cookiexfer",
       zip_safe=False,
       tests_require = requires,
       install_requires = requires,
+      test_suite='tests',
       )
 

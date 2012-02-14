@@ -1,2 +1,5 @@
+0.0.2
+	adding tests
+
 0.0.1
-initial import
+	initial import
