@@ -10,16 +10,16 @@ README = open(os.path.join(here, "README.txt")).read()
 README = README.split("\n\n", 1)[0] + "\n"
 
 requires = [
-    "pyramid", 
+    "pyramid",
     ]
 
 setup(name="pyramid_subscribers_cookiexfer",
-      version="0.0.1",
+      version="0.0.3",
       description="transfers cookies from request to response on exceptions",
       long_description=README,
       classifiers=[
         "Intended Audience :: Developers",
-        "Framework :: Pylons",
+        "Framework :: Pyramid",
         "Programming Language :: Python",
         "License :: OSI Approved :: MIT License",
         ],
