@@ -1,8 +1,11 @@
+0.0.4
+    flake8
+
 0.0.3
-	added pyramid classifier
+    added pyramid classifier
 
 0.0.2
-	adding tests
+    adding tests
 
 0.0.1
-	initial import
+    initial import
