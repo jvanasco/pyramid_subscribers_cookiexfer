@@ -15,7 +15,7 @@ requires = [
 
 setup(
     name="pyramid_subscribers_cookiexfer",
-    version="0.0.4",
+    version="0.0.5",
     description="transfers cookies from request to response on exceptions",
     long_description=README,
     classifiers=[

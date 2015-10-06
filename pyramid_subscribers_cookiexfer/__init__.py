@@ -29,15 +29,20 @@ def new_response(event):
 
         # cookies_request is populated if the exception is RETURNed
         # cookies_request is not populated if the exception is RAISEd
-        cookies_request = [(k, v) for (k, v) in event.request.response.headers.iteritems() if k.lower() == 'set-cookie']
+        cookies_request = [(k, v) for (k, v)
+                           in event.request.response.headers.iteritems()
+                           if k.lower() == 'set-cookie'
+                           ]
 
         # cookies_response is populated if the exception is created with headers specified
-        cookies_response = [(k, v) for (k, v) in event.response.headers.iteritems() if k.lower == 'set-cookie']
+        cookies_response = [(k, v) for (k, v)
+                            in event.response.headers.iteritems()
+                            if k.lower == 'set-cookie'
+                            ]
 
         # debug
-        if False:
-            print "-------- cookies request  || %s" % cookies_request
-            print "-------- cookies response || %s" % cookies_response
+        # print "-------- cookies request  || %s" % cookies_request
+        # print "-------- cookies response || %s" % cookies_response
 
         if cookies_request or cookies_response:
             log.debug("cookie-xfer - migrating cookies INTO session")
@@ -99,12 +104,12 @@ def new_response(event):
 def initialize_subscribers(config, settings):
     # create a package settings hash
     package_settings = {'re_excludes': re.compile(settings['cookie_xfer.re_excludes'])}
-    for i in [
+    for i in (
         'redirect_add_headers',
         'redirect_add_headers__unique',
         'redirect_session_save',
-        'redirect_session_save__unique'
-    ]:
+        'redirect_session_save__unique',
+    ):
         if settings['cookie_xfer.%s' % i].lower() == 'true':
             package_settings[i] = True
         else:
