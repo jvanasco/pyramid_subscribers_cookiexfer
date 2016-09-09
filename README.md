@@ -63,14 +63,24 @@ A few case examples
 - NO cookies set by `request.response.set_cookie` will be transferred
 
 
+configuration options
+---------------------
+
+`cookie_xfer.re_excludes`
+If set, this will be compiled into a regex. routes matching this regex will be ignored.
+
+`cookie_xfer.redirect_add_headers`
+If "true", 
+
+
+
 setup
 -----
 
 environment.ini
     cookie_xfer.redirect_add_headers = True
-    cookie_xfer.redirect_add_headers__unique = True
     cookie_xfer.redirect_session_save = False
-    cookie_xfer.redirect_session_save__unique = False
+    cookie_xfer.apply_unique = False
     cookie_xfer.re_excludes = "^/(css|img|js|deform|_debug_toolbar)"
 
 

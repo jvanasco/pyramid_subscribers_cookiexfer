@@ -3,12 +3,12 @@ log = logging.getLogger(__name__)
 
 from pyramid.httpexceptions import HTTPException
 import re
-
+import warnings
 
 def new_request(event):
     """new_request(event) ; if there is a @cookie-xfer value in the session, will set the headers and then delete it"""
     settings = event.request.registry.settings['@cookie_xfer']
-    if re.match(settings['re_excludes'], event.request.path_info):
+    if settings['re_excludes'] and re.match(settings['re_excludes'], event.request.path_info):
         return
     log.debug('cookie-xfer cookiexfer_new_request')
     if settings['redirect_session_save']:
@@ -21,7 +21,7 @@ def new_request(event):
 def new_response(event):
     """new_response(event) ; migrates headers or saves cookies. NOTE you must either RETURN the exception, or RAISE it and include headers """
     settings = event.request.registry.settings['@cookie_xfer']
-    if re.match(settings['re_excludes'], event.request.path_info):
+    if settings['re_excludes'] and re.match(settings['re_excludes'], event.request.path_info):
         return
 
     if isinstance(event.response, HTTPException):
@@ -54,13 +54,13 @@ def new_response(event):
             session_cookies_unique = []
 
             # then precalculate how we'll save the cookies
-            if not settings['redirect_add_headers__unique'] or not settings['redirect_session_save__unique']:
+            if not settings['apply_unique']:
                 # headers only need migrated cookies
                 headers_cookies_all = cookies_request
                 # session needs to save cookies
                 session_cookies_all = cookies_request + cookies_response
 
-            if settings['redirect_add_headers__unique'] or settings['redirect_session_save__unique']:
+            else:
 
                 # do a 'seen' dict
                 _cookies_unique__seen = {}
@@ -88,12 +88,13 @@ def new_response(event):
 
             # now start sending
             if settings['redirect_add_headers']:
-                if settings['redirect_add_headers__unique']:
+                if settings['apply_unique']:
                     event.response.headers.extend(headers_cookies_unique)
                 else:
                     event.response.headers.extend(headers_cookies_all)
+
             if settings['redirect_session_save']:
-                if settings['redirect_session_save__unique']:
+                if settings['apply_unique']:
                     event.request.session['@cookie-xfer'] = session_cookies_unique
                 else:
                     event.request.session['@cookie-xfer'] = session_cookies_all
@@ -103,17 +104,28 @@ def new_response(event):
 
 def initialize_subscribers(config, settings):
     # create a package settings hash
-    package_settings = {'re_excludes': re.compile(settings['cookie_xfer.re_excludes'])}
+    package_settings = {}
+    re_excludes = settings.get('cookie_xfer.re_excludes', None)
+    if re_excludes:
+        re_excludes = re.compile(re_excludes)
+    package_settings['re_excludes'] = re_excludes
+    
+    for i in ('redirect_add_headers__unique', 'redirect_session_save__unique'):
+        _val = settings.get('cookie_xfer.%s' % i, False)
+        if _val is not False:
+            warnings.warn("`cookie_xfer.%s` has been deprecated in favor of `cookie_xfer.apply_unique`" % i, DeprecationWarning)
+            settings['cookie_xfer.%s' % i] = _val
+    
     for i in (
         'redirect_add_headers',
-        'redirect_add_headers__unique',
         'redirect_session_save',
-        'redirect_session_save__unique',
+        'apply_unique',
     ):
-        if settings['cookie_xfer.%s' % i].lower() == 'true':
-            package_settings[i] = True
-        else:
-            package_settings[i] = False
+        _val = settings.get('cookie_xfer.%s' % i, False)
+        if _val is not False:
+            if _val.lower == 'true':
+                _val = True
+        package_settings[i] = _val
     config.registry.settings['@cookie_xfer'] = package_settings
 
     config.add_subscriber(
@@ -122,7 +134,7 @@ def initialize_subscribers(config, settings):
     )
 
     # we only need a NewRequest subscriber if we're storing stuff in the session
-    if package_settings['redirect_session_save'] or package_settings['redirect_session_save__unique']:
+    if package_settings['redirect_session_save']:
         config.add_subscriber(
             new_request,
             'pyramid.events.NewRequest'

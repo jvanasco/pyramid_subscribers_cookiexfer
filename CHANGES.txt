@@ -1,3 +1,7 @@
+0.1.0
+	fixed configuration
+	replaced "redirect_add_headers__unique" and "redirect_session_save__unique" with `apply_unique`
+
 0.0.7
 	fixed packaging issue
 

@@ -1,4 +1,4 @@
-Copyright (c) 2012, Jonathan Vanasco <jonathan@findmeon.com>
+Copyright (c) 2016, Jonathan Vanasco <jonathan@findmeon.com>
 
 MIT License -- http://www.opensource.org/licenses/mit-license
 
