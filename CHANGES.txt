@@ -1,3 +1,6 @@
+0.1.1
+	python3 support
+
 0.1.0
 	fixed configuration
 	replaced "redirect_add_headers__unique" and "redirect_session_save__unique" with `apply_unique`

@@ -5,6 +5,13 @@ from pyramid.httpexceptions import HTTPException
 import re
 import warnings
 
+
+__VERSION__ = '0.1.1'
+
+
+# ------------------------------------------------------------------------------
+
+
 def new_request(event):
     """new_request(event) ; if there is a @cookie-xfer value in the session, will set the headers and then delete it"""
     settings = event.request.registry.settings['@cookie_xfer']
@@ -30,13 +37,13 @@ def new_response(event):
         # cookies_request is populated if the exception is RETURNed
         # cookies_request is not populated if the exception is RAISEd
         cookies_request = [(k, v) for (k, v)
-                           in event.request.response.headers.iteritems()
+                           in event.request.response.headers.items()
                            if k.lower() == 'set-cookie'
                            ]
 
         # cookies_response is populated if the exception is created with headers specified
         cookies_response = [(k, v) for (k, v)
-                            in event.response.headers.iteritems()
+                            in event.response.headers.items()
                             if k.lower == 'set-cookie'
                             ]
 
@@ -89,15 +96,23 @@ def new_response(event):
             # now start sending
             if settings['redirect_add_headers']:
                 if settings['apply_unique']:
-                    event.response.headers.extend(headers_cookies_unique)
+                    if headers_cookies_unique:
+                        log.debug('headers_cookies_unique: %s', headers_cookies_unique)
+                        event.response.headers.extend(headers_cookies_unique)
                 else:
-                    event.response.headers.extend(headers_cookies_all)
+                    if headers_cookies_all:
+                        log.debug('headers_cookies_all: %s', headers_cookies_all)
+                        event.response.headers.extend(headers_cookies_all)
 
             if settings['redirect_session_save']:
                 if settings['apply_unique']:
-                    event.request.session['@cookie-xfer'] = session_cookies_unique
+                    if session_cookies_unique:
+                        log.debug('session_cookies_unique: %s', session_cookies_unique)
+                        event.request.session['@cookie-xfer'] = session_cookies_unique
                 else:
-                    event.request.session['@cookie-xfer'] = session_cookies_all
+                    if session_cookies_all:
+                        log.debug('session_cookies_all: %s', session_cookies_all)
+                        event.request.session['@cookie-xfer'] = session_cookies_all
 
         log.debug('/cookie-xfer cookiexfer_new_response')
 
@@ -109,13 +124,13 @@ def initialize_subscribers(config, settings):
     if re_excludes:
         re_excludes = re.compile(re_excludes)
     package_settings['re_excludes'] = re_excludes
-    
+
     for i in ('redirect_add_headers__unique', 'redirect_session_save__unique'):
         _val = settings.get('cookie_xfer.%s' % i, False)
         if _val is not False:
             warnings.warn("`cookie_xfer.%s` has been deprecated in favor of `cookie_xfer.apply_unique`" % i, DeprecationWarning)
             settings['cookie_xfer.%s' % i] = _val
-    
+
     for i in (
         'redirect_add_headers',
         'redirect_session_save',

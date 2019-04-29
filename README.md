@@ -92,3 +92,8 @@ app/__init__.py
         ...
         pyramid_subscribers_cookiexfer.initialize( config , settings )
         ...
+
+
+TODO:
+-----
+tests
