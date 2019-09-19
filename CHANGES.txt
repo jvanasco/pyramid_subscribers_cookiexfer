@@ -1,3 +1,6 @@
+0.1.2dev
+	black
+
 0.1.1
 	python3 support
 

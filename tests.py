@@ -8,7 +8,6 @@ from pyramid import testing
 
 
 class TestPyramid(unittest.TestCase):
-
     def setUp(self):
         self.config = testing.setUp()
         # self.config.testing_add_subscriber('pyramid_subscribers_cookiexfer.new_request',event_iface='pyramid.events.NewRequest')
