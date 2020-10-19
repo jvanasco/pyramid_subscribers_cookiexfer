@@ -21,7 +21,18 @@ with open(
         os.path.dirname(__file__), "pyramid_subscribers_cookiexfer", "__init__.py"
     )
 ) as v_file:
-    VERSION = re.compile(r".*__VERSION__ = '(.*?)'", re.S).match(v_file.read()).group(1)
+    VERSION = re.compile(r'.*__VERSION__ = "(.*?)"', re.S).match(v_file.read()).group(1)
+
+
+requires = [
+    "six",
+    "pyramid",
+]
+tests_require = [
+    "pytest",
+    "webtest",
+]
+testing_extras = tests_require + []
 
 
 setup(
@@ -45,7 +56,10 @@ setup(
     license="MIT",
     include_package_data=True,
     zip_safe=False,
-    tests_require=requires,
     install_requires=requires,
+    tests_require=requires,
+    extras_require={
+        "testing": testing_extras,
+    },
     test_suite="tests",
 )

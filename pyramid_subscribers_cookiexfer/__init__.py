@@ -2,19 +2,29 @@ import logging
 
 log = logging.getLogger(__name__)
 
-from pyramid.httpexceptions import HTTPException
+# stdlib
 import re
 import warnings
 
+# pyramid
+from pyramid.httpexceptions import HTTPException
+from pyramid.settings import asbool
 
-__VERSION__ = "0.1.2dev"
+
+__VERSION__ = "0.2.0dev0"
 
 
 # ------------------------------------------------------------------------------
 
 
 def new_request(event):
-    """new_request(event) ; if there is a @cookie-xfer value in the session, will set the headers and then delete it"""
+    """
+    new_request(event)
+
+    :param event: Pyramid Event
+
+    if there is a @cookie-xfer value in the session, will set the headers and then delete it
+    """
     settings = event.request.registry.settings["@cookie_xfer"]
     if settings["re_excludes"] and re.match(
         settings["re_excludes"], event.request.path_info
@@ -29,7 +39,13 @@ def new_request(event):
 
 
 def new_response(event):
-    """new_response(event) ; migrates headers or saves cookies. NOTE you must either RETURN the exception, or RAISE it and include headers """
+    """
+    new_response(event) ; migrates headers or saves cookies.
+
+    :param event: Pyramid Event
+
+    NOTE you must either RETURN the exception, or RAISE it and include headers.
+    """
     settings = event.request.registry.settings["@cookie_xfer"]
     if settings["re_excludes"] and re.match(
         settings["re_excludes"], event.request.path_info
@@ -40,14 +56,16 @@ def new_response(event):
         log.debug("cookie-xfer cookiexfer_new_response")
 
         # cookies_request is populated if the exception is RETURNed
-        # cookies_request is not populated if the exception is RAISEd
+        # cookies_request is not populated if the exception is RAISEd from
+        # a class based view during __init__ of the class.
         cookies_request = [
             (k, v)
             for (k, v) in event.request.response.headers.items()
             if k.lower() == "set-cookie"
         ]
 
-        # cookies_response is populated if the exception is created with headers specified
+        # cookies_response is populated if the exception is created with
+        # headers specified
         cookies_response = [
             (k, v)
             for (k, v) in event.response.headers.items()
@@ -79,14 +97,16 @@ def new_response(event):
                 # do a 'seen' dict
                 _cookies_unique__seen = {}
 
-                # first we should favor the items that we specifically set in the response
+                # first we should favor the items that we specifically set
+                # in the response
                 # headers stay empty
                 headers_cookies_unique = []
                 # session should favor items from the resposne
                 session_cookies_unique = cookies_response
 
                 # and log them all as seen
-                # don't add them to the cookies_unique, because they're already in the object
+                # don't add them to the cookies_unique, because they're already
+                # in the object
                 for (k, v) in cookies_response:
                     _v = v.split(";")
                     if _v[0] not in _cookies_unique__seen:
@@ -124,32 +144,33 @@ def new_response(event):
         log.debug("/cookie-xfer cookiexfer_new_response")
 
 
-def initialize_subscribers(config, settings):
-    # create a package settings hash
+def includeme(config):
+    """
+    Previously `initialize_subscribers`
+    """
+
+    app_settings = config.registry.settings
     package_settings = {}
-    re_excludes = settings.get("cookie_xfer.re_excludes", None)
+
+    for i in ("redirect_add_headers__unique", "redirect_session_save__unique"):
+        if "cookie_xfer.%s" % i in app_settings:
+            raise ValueError("`cookie_xfer.%s` was removed" % i)
+
+    re_excludes = app_settings.get("cookie_xfer.re_excludes", None)
     if re_excludes:
         re_excludes = re.compile(re_excludes)
     package_settings["re_excludes"] = re_excludes
 
-    for i in ("redirect_add_headers__unique", "redirect_session_save__unique"):
-        _val = settings.get("cookie_xfer.%s" % i, False)
-        if _val is not False:
-            warnings.warn(
-                "`cookie_xfer.%s` has been deprecated in favor of `cookie_xfer.apply_unique`"
-                % i,
-                DeprecationWarning,
-            )
-            settings["cookie_xfer.%s" % i] = _val
+    for _setting in ("redirect_add_headers", "redirect_session_save", "apply_unique"):
+        _app_key = "cookie_xfer.%s" % _setting
+        _val = asbool(app_settings.get(_app_key, None))
+        app_settings[_app_key] = _val
+        package_settings[_setting] = _val
 
-    for i in ("redirect_add_headers", "redirect_session_save", "apply_unique"):
-        _val = settings.get("cookie_xfer.%s" % i, False)
-        if _val is not False:
-            if _val.lower == "true":
-                _val = True
-        package_settings[i] = _val
+    # stash our package_settings
     config.registry.settings["@cookie_xfer"] = package_settings
 
+    # add a NewResposne
     config.add_subscriber(new_response, "pyramid.events.NewResponse")
 
     # we only need a NewRequest subscriber if we're storing stuff in the session
